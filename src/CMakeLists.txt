@@ -10,6 +10,8 @@ include_directories(
 
 add_library( zenmon SHARED 
   zenmon.cpp
+  process.cpp
+  common.cpp
   loader.cpp
 )  
   

@@ -28,7 +28,6 @@ static void* thread_function( void* ) {
     
     pthread_mutex_unlock( &lock );
   }
-
     
 
 }
