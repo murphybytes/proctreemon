@@ -1,8 +1,22 @@
 #include "common.hpp"
 
 
+
 const char* const cstr( const stringstream& ss ) {
   return ss.str().c_str();
+}
+
+int get_update_frequency() {
+  int result = 1;
+  char* buff = getenv( ZM_POLL_FREQUENCY );
+  if( buff ) {
+    unsigned int temp = atoi( buff );
+    if( temp ) {
+      result = temp;
+    }
+  } 
+
+  return result;
 }
 
 int pid_from_path( const char * const path ) {

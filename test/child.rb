@@ -1,1 +1,3 @@
-sleep 22
+`ruby childchild.rb`
+#sleep 22
+

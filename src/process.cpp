@@ -1,27 +1,25 @@
 #include "process.hpp"
 
 
-process::process( int pid, bool parent  )
-  :in_(NULL), pid_(pid), parent_(parent) {
+process::process( int pid, const cpu& cpu,  bool parent  )
+  :exists_(false), pid_(pid), parent_(parent), cpu_(cpu) {
 
   get_command_line();
   get_stat_section();
 }
 
 process::~process() {
-  if( in_ ) {
-    fclose( in_ );
-  }
+
 }
 
 void process::get_stat_section() {
   stringstream ss;
   ss << "/proc/" << pid_ << "/stat" ;
-  in_ = fopen( cstr( ss ), "r" );
-  if( in_ ) {
+  FILE* in = fopen( cstr( ss ), "r" );
+  if( in ) {
     int pid;
     
-    fscanf( in_, "%d %s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu %ld %ld %ld %ld %ld %ld %llu %lu %ld %lu %lu"
+    fscanf( in, "%d %s %c %d %d %d %d %d %u %lu %lu %lu %lu %lu %lu %ld %ld %ld %ld %ld %ld %llu %lu %ld %lu %lu"
 	    " %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %d %d %u %u %llu %lu %ld", 
 	    &pid, 
 	    command_, 
@@ -67,7 +65,15 @@ void process::get_stat_section() {
 	    &delayacct_blkio_ticks_,
 	    &guest_time_,
 	    &cguest_time_ );
+
+    fclose( in );
+
+    assert( pid == pid_ );
+
+    exists_ = true; // indicate this process still exists
   }
+
+  
 }
 
 void process::get_command_line() {
@@ -94,11 +100,9 @@ void process::get_command_line() {
 	} 
       }
     } else {
-      command_line_[0] = 0;
+      strcpy( command_line_, "(?)" );
     }
-
   }
-
 }
 
 
@@ -108,14 +112,22 @@ bool process::is_parent( const process& potential_child ) const {
 
 void process::write( const timespec& ts, FILE* out ) {
   
-  if( in_ ) {
+  if( exists_ ) {
 
-    fprintf( out, "%ld.%ld %d %d %s\n", 
+
+    // seconds.nsecs, parent_pid, pid, (command line), user%, nice%, system%, idle%, process user ticks, process system ticks 
+    fprintf( out, "%ld.%ld,%d,%d,\"%s\",%3.2f,%3.2f,%3.2f,%3.2f,%lu,%lu\n", 
 	     ts.tv_sec, 
 	     ts.tv_nsec, 
 	     parent_ ? 0 : parent_pid_,
 	     pid_,
-	     command_line_  );
+	     command_line_,
+	     cpu_.get_user(),
+	     cpu_.get_nice(),
+	     cpu_.get_system(),
+	     cpu_.get_idle(),
+	     utime_,
+	     stime_);
   }
 }
 

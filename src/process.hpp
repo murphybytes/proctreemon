@@ -2,12 +2,15 @@
 #define __process_hpp__
 
 #include "common.hpp"
+#include "cpu.hpp"
 
 class process {
-  FILE* in_;
+  bool exists_ ;
   char command_line_[MAXLINE];
   bool parent_;
 
+  cpu cpu_;
+  
   int pid_;
   char command_[MAXLINE];
   char state_;
@@ -58,10 +61,12 @@ class process {
   void get_command_line() ;
   void get_stat_section() ;
 public:
-  process( int pid, bool parent = false ) ;
+  process( int pid, const cpu& cpu, bool parent = false ) ;
   ~process();
   void write( const timespec& ts, FILE* out ) ;
   bool is_parent( const process& potential_child ) const;
+  int get_parent_pid() const { return parent_pid_; }
+  int get_pid() const { return pid_; }
 };
 
 #endif

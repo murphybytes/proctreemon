@@ -6,6 +6,8 @@
 pthread_t thread_id;
 pthread_mutex_t lock;
 pthread_cond_t shutdown_flag;
+const int x_update_frequency = get_update_frequency();
+const long x_clock_ticks = sysconf( _SC_CLK_TCK );
 
 static void* thread_function( void* ) {
   zenmon z;
@@ -17,7 +19,7 @@ static void* thread_function( void* ) {
     timespec ts;
     clock_gettime( CLOCK_REALTIME, &ts );
     // TODO: make this configurable via environment or something 
-    ts.tv_sec += 1;
+    ts.tv_sec += x_update_frequency;
     int rc = pthread_cond_timedwait( &shutdown_flag, &lock, &ts );
     if( ETIMEDOUT == rc ) {
       z.check();
@@ -33,6 +35,7 @@ static void* thread_function( void* ) {
 }
 
 __attribute__((constructor)) void init( void ) {
+  
   pthread_mutex_init( &lock, NULL ) ;
   pthread_cond_init( &shutdown_flag, NULL ) ;
   pthread_create( &thread_id, NULL, thread_function, NULL ) ;
