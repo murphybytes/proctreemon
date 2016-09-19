@@ -1,25 +1,25 @@
-#include "zenmon.hpp"
+#include "proctreemon.hpp"
 
 
-zenmon::zenmon() 
+proctreemon::proctreemon()
   :pid_( getpid() ), output_(stdout)  {
 
   char* env_value  = getenv( ZM_WORKINGDIR );
   if( env_value ) {
     timespec ts;
     clock_gettime( CLOCK_REALTIME, &ts );
-    
+
     stringstream ss ;
-    ss << env_value << "/" << ts.tv_sec << "." << ts.tv_nsec << "." << pid_; 
+    ss << env_value << "/" << ts.tv_sec << "." << ts.tv_nsec << "." << pid_;
 
     output_ = fopen(  cstr( ss ), "w" );
   }
 }
 
-zenmon::~zenmon() {
+proctreemon::~proctreemon() {
 }
 
-void zenmon::check() {
+void proctreemon::check() {
   timespec ts;
   clock_gettime(CLOCK_REALTIME, &ts );
   cpu cpu;
@@ -30,12 +30,12 @@ void zenmon::check() {
 
   glob_t globbuf;
   glob( "/proc/[0-9]*", GLOB_NOSORT, NULL, &globbuf );
-  
+
   // get list of all processes that are candidates to be included
   // in our tree
   for( int i = 0; i < globbuf.gl_pathc; ++i ) {
     int pid = pid_from_path( globbuf.gl_pathv[i] );
-    process candidate_process( pid, cpu ) ; 
+    process candidate_process( pid, cpu ) ;
     process_map[candidate_process.get_parent_pid()].push_back( candidate_process  );
   }
 
@@ -45,7 +45,7 @@ void zenmon::check() {
 
 }
 
-void zenmon::print_children( int parent_pid, const timespec& ts, const process_map_t& processes ) {
+void proctreemon::print_children( int parent_pid, const timespec& ts, const process_map_t& processes ) {
   if( processes.count( parent_pid ) ) {
     process_map_t::const_iterator element  = processes.find( parent_pid );
     processes_t children = element->second;

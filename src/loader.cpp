@@ -1,4 +1,4 @@
-#include "zenmon.hpp"
+#include "proctreemon.hpp"
 #include <errno.h>
 #include <pthread.h>
 
@@ -10,7 +10,7 @@ const int x_update_frequency = get_update_frequency();
 const long x_clock_ticks = sysconf( _SC_CLK_TCK );
 
 static void* thread_function( void* ) {
-  zenmon z;
+  proctreemon z;
 
   bool run = true;
 
@@ -18,24 +18,24 @@ static void* thread_function( void* ) {
     pthread_mutex_lock( &lock );
     timespec ts;
     clock_gettime( CLOCK_REALTIME, &ts );
-    // TODO: make this configurable via environment or something 
+    // TODO: make this configurable via environment or something
     ts.tv_sec += x_update_frequency;
     int rc = pthread_cond_timedwait( &shutdown_flag, &lock, &ts );
     if( ETIMEDOUT == rc ) {
       z.check();
     } else {
       // we got a shut down signal, exit loop
-      run = false; 
+      run = false;
     }
-    
+
     pthread_mutex_unlock( &lock );
   }
-    
+
 
 }
 
 __attribute__((constructor)) void init( void ) {
-  
+
   pthread_mutex_init( &lock, NULL ) ;
   pthread_cond_init( &shutdown_flag, NULL ) ;
   pthread_create( &thread_id, NULL, thread_function, NULL ) ;
